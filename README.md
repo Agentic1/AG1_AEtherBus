@@ -1,4 +1,4 @@
-# 🧠 Agentic1 Redis Messaging Bus
+#Agentic1 Redis Messaging Bus
 
 This system uses Redis Streams to handle real-time messaging between agents and users. Each user has their own inbox stream (e.g. `user.<user_id>.inbox`), and agents dynamically discover and subscribe to new user streams.
 
@@ -34,7 +34,7 @@ If you see results in the outbox, the system is working end-to-end!
 
 ---
 
-## ✅ How It Works
+## How It Works
 
 - **Each user** gets a personal inbox: `user.<user_id>.inbox`
 - The system scans for new streams matching `user.*.inbox`
@@ -43,7 +43,7 @@ If you see results in the outbox, the system is working end-to-end!
 
 ---
 
-## 🛰️ Developer Flow (CLI / SDK)
+## Developer Flow (CLI / SDK)
 
 1. No need to manually announce a user anymore ✅
 2. Just send a message via `publish_envelope(...)` — this:
@@ -68,7 +68,7 @@ That’s it. The system handles discovery, subscriptions, and routing.
 
 ---
 
-## 🔥 Behind the Scenes
+## Behind the Scenes
 
 - Discovery uses `SCAN` + `asyncio.create_task()` to keep subscriptions non-blocking
 - First message in each inbox is always processed (`xreadgroup` uses `'0'` once)
