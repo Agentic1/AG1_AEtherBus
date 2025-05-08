@@ -1,4 +1,4 @@
-#Agentic1 Redis Messaging Bus
+# Agentic1 Redis Messaging Bus
 
 This system uses Redis Streams to handle real-time messaging between agents and users. Each user has their own inbox stream (e.g. `user.<user_id>.inbox`), and agents dynamically discover and subscribe to new user streams.
 
