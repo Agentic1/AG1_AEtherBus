@@ -43,9 +43,51 @@ If you see results in the outbox, the system is working end-to-end!
 
 ---
 
+## 📬 Redis Stream/Mailbox Structure
+
+This project uses a **namespaced, structured key system** for all Redis streams, making it easy to route, discover, and manage messages between users, agents, flows, sessions, and edges.
+
+### Key Naming Conventions
+
+All keys are prefixed with the namespace (default: `AG1`).
+
+| Purpose          | Example Key Format                      | Example Value                  |
+|------------------|----------------------------------------|-------------------------------|
+| User Inbox       | `AG1:user:{user_id}:inbox`              | `AG1:user:123:inbox`          |
+| Agent Inbox      | `AG1:agent:{agent_id}:inbox`            | `AG1:agent:alpha:inbox`       |
+| Agent Outbox     | `AG1:agent:{agent_id}:outbox`           | `AG1:agent:alpha:outbox`      |
+| Flow Input       | `AG1:flow:{flow_id}:input`              | `AG1:flow:myflow:input`       |
+| Flow Output      | `AG1:flow:{flow_id}:output`             | `AG1:flow:myflow:output`      |
+| Session Stream   | `AG1:session:{session_code}:stream`     | `AG1:session:xyz123:stream`   |
+| Edge Register    | `AG1:edge:{platform}:register`          | `AG1:edge:telegram:register`  |
+
+> **Note:** Always use the `StreamKeyBuilder` class to generate these keys in code.
+
+### Example: Creating Keys in Code
+
+```python
+from AG1_AetherBus.keys import StreamKeyBuilder
+
+keys = StreamKeyBuilder(namespace="AG1")
+user_inbox = keys.user_inbox("123")         # AG1:user:123:inbox
+agent_outbox = keys.agent_outbox("alpha")   # AG1:agent:alpha:outbox
+flow_input = keys.flow_input("myflow")      # AG1:flow:myflow:input
+edge_reg = keys.edge_register("telegram")   # AG1:edge:telegram:register
+```
+
+### How Agents and Users Interact
+
+- **Users** send messages to their own inbox (`user.{user_id}.inbox`).
+- **Agents** monitor user inboxes, process messages, and reply via their outbox or directly to user inboxes.
+- **Flows** represent multi-step processes, with input/output streams.
+- **Sessions** can be tracked for conversation or transaction state.
+- **Edges** represent integrations with external platforms (e.g., Telegram).
+
+---
+
 ## Developer Flow (CLI / SDK)
 
-1. No need to manually announce a user anymore ✅
+1. No need to manually announce a user anymore 
 2. Just send a message via `publish_envelope(...)` — this:
    - Creates the stream (if not exists)
    - Triggers discovery automatically
@@ -222,3 +264,69 @@ Envelope(
 - For new endpoints, validate tool names and schemas before publishing.
 
 ---
+
+## Agent Registration & Edge Integration
+
+### Current Registration (Telegram Example)
+- Each agent registers with the edge handler (e.g., Telegram) by sending a registration envelope to the `AG1:tg:register` stream.
+- The envelope is constructed from a simple config file, e.g.:
+  ```json
+  {
+    "agent_name": "Muse1",
+    "tg_handle": "@AG1_muse_bot",
+    "key": "..."
+  }
+  ```
+- The registration envelope includes:
+  - `agent_name`: The agent's unique name
+  - `tg_handle`: The Telegram bot handle
+  - `key`: The Telegram bot token
+
+**Envelope Example:**
+```python
+Envelope(
+    role="agent",
+    envelope_type="register",
+    agent_name=config["agent_name"],
+    content={
+        "tg_handle": config.get("tg_handle"),
+        "key": config.get("key")
+    },
+    timestamp=...
+)
+```
+
+### How It Works
+- The Telegram edge handler listens for these and registers the agent for message routing.
+
+---
+
+### Future-Proofing: Supporting Multiple Edge Types
+
+> **TODO: See `register_with_tg_handler` in agent_bus_minimal.py for implementation notes.**
+
+- In the future, agents may need to register with various edge nodes (Telegram, Nostr, Matrix, Discord, etc.).
+- The config should support a list of edges/channels:
+  ```json
+  {
+    "agent_name": "Muse1",
+    "edges": [
+      {"type": "telegram", "handle": "@AG1_muse_bot", "key": "..."},
+      {"type": "nostr", "pubkey": "npub1..."},
+      {"type": "matrix", "id": "@muse:matrix.org", "token": "..."}
+    ]
+  }
+  ```
+- The registration envelope should include the relevant edge config in its `content` field.
+- Each edge handler should process only registrations for its type.
+- This allows easy extensibility for new protocols and edge types.
+
+---
+
+### Developer Notes
+- To add a new edge type:
+  1. Extend the agent config with the new edge type and its required fields.
+  2. Update the registration logic to send the correct envelope for each edge.
+  3. Implement/extend the edge handler to process new edge registrations.
+- See the `register_with_tg_handler` function in `agent_bus_minimal.py` for a template and TODO notes.
+

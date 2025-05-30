@@ -271,7 +271,7 @@ if __name__ == "__main__":
             handler=handler_with_redis
         )
         # Keep the process alive (should never exit)
-        await asyncio.Event().wait()
+        #await asyncio.Event().wait()
 
     asyncio.run(main())
 

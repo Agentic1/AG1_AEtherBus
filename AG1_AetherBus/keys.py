@@ -29,6 +29,22 @@ class StreamKeyBuilder:
 
     def edge_response(self, platform, target):
         return f"{self.ns}:edge:{platform}:{target}:response"
+    
+    def a2a_register(self) -> str:
+        """Registration channel for A2A agents"""
+        return f"{self.ns}:a2a:register"
+
+    def a2a_inbox(self, agent_name: str) -> str:
+        """Inbox for A2A agent messages"""
+        return f"{self.ns}:a2a:agent:{agent_name}:inbox"
+
+    def a2a_stream(self, agent_name: str, task_id: str) -> str:
+        """Streaming task channel for A2A agents"""
+        return f"{self.ns}:a2a:stream:{agent_name}:{task_id}"
+
+    def a2a_response(self, agent_name: str, task_id: str) -> str:
+        """Response channel for A2A streaming tasks"""
+        return f"{self.ns}:a2a:response:{agent_name}:{task_id}"
 
     def billing_ledger(self, agent_id):
         return f"{self.ns}:billing:{agent_id}:ledger"

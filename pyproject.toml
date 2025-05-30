@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "AG1_AEtherBus"
-version = "0.1.0"
+version = "0.1.1"
 description = "Redis-based async message bus for agent communication (envelope-based, reusable, production-ready)"
 authors = ["Sean C. <sean@propensity.co.za>"]
 license = "MIT"
