@@ -45,6 +45,11 @@ class BusAdapterV2:
         for pattern in self.patterns:
             await self._subscribe_pattern(pattern, self.core)
 
+    async def stop(self):
+        """Cancel all running subscription tasks."""
+        for pattern in list(self._running_subscription_tasks.keys()):
+            await self.remove_subscription(pattern)
+
     async def _subscribe_pattern(
         self,
         pattern: str,
