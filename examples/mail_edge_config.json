@@ -1,0 +1,8 @@
+{
+  "username": "mybot@example.com",
+  "password": "app-password",
+  "imap_host": "imap.gmail.com",
+  "smtp_host": "smtp.gmail.com",
+  "smtp_port": 587
+}
+
