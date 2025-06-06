@@ -14,7 +14,8 @@ Credentials can be provided via environment variables or a config file.
 - `AZURE_OPENAI_API_VERSION` – API version (default `2024-02-15-preview`)
 
 ### Config File
-You may supply a JSON or YAML file with the same keys using `--config`:
+You may supply a JSON or YAML file with the same keys using `--config`.
+An example config is provided in `examples/llm_edge_config.yaml`:
 
 ```yaml
 endpoint: https://your-endpoint.openai.azure.com/
