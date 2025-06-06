@@ -62,6 +62,7 @@ All keys are prefixed with the namespace (default: `AG1`).
 | Edge Register    | `AG1:edge:{platform}:register`          | `AG1:edge:telegram:register`  |
 | LLM Requests     | `AG1:edge:llm:requests`                 | `AG1:edge:llm:requests`       |
 | LLM Register     | `AG1:edge:llm:register`                 | `AG1:edge:llm:register`       |
+| Mail Register    | `AG1:edge:mail:register`                | `AG1:edge:mail:register`      |
 
 > **Note:** Always use the `StreamKeyBuilder` class to generate these keys in code.
 
