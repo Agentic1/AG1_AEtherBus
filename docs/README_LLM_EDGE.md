@@ -16,6 +16,12 @@ python -m AG1_AetherBus.handlers.llm_edge_handler
 ```
 Ensure the Redis connection is configured via standard bus variables.
 
+### Registration
+Agents can announce their ability to use the LLM edge by publishing a
+registration Envelope to `AG1:edge:llm:register`. The helper
+`register_with_llm_handler` in `agent_bus_minimal.py` shows how to
+construct this envelope.
+
 ## Message Flow
 1. Client publishes a prompt to `AG1:edge:llm:requests` with a `reply_to` stream
 2. The handler calls the Azure OpenAI Chat Completion API
