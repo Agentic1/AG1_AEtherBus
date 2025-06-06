@@ -1,5 +1,7 @@
 import asyncio
 import os
+import json
+import argparse
 from dotenv import load_dotenv
 from redis.asyncio import Redis
 
@@ -13,18 +15,35 @@ try:
 except ImportError:  # pragma: no cover - openai optional for tests
     openai = None
 
-load_dotenv()
+try:
+    import yaml  # optional for YAML configs
+except Exception:  # pragma: no cover - yaml may be absent in minimal env
+    yaml = None
 
-# Azure OpenAI configuration
-AZURE_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
-AZURE_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
-AZURE_DEPLOYMENT = os.getenv("AZURE_OPENAI_DEPLOYMENT")
-AZURE_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-15-preview")
+def load_llm_config(path: str | None = None) -> dict:
+    """Load Azure OpenAI credentials from a file or environment."""
+    load_dotenv()
+    config: dict = {}
+    if path and os.path.isfile(path):
+        with open(path, "r") as f:
+            if path.endswith(('.yml', '.yaml')) and yaml:
+                config = yaml.safe_load(f) or {}
+            else:
+                config = json.load(f)
+    return {
+        "endpoint": os.getenv("AZURE_OPENAI_ENDPOINT", config.get("endpoint")),
+        "api_key": os.getenv("AZURE_OPENAI_API_KEY", config.get("api_key")),
+        "deployment": os.getenv("AZURE_OPENAI_DEPLOYMENT", config.get("deployment")),
+        "api_version": os.getenv(
+            "AZURE_OPENAI_API_VERSION",
+            config.get("api_version", "2024-02-15-preview"),
+        ),
+    }
 
 keys = StreamKeyBuilder()
 REQUEST_STREAM = keys.edge_stream("llm", "requests")
 
-async def handle_llm_request(env: Envelope, redis: Redis):
+async def handle_llm_request(env: Envelope, redis: Redis, cfg: dict):
     """Process incoming LLM requests and publish responses."""
     prompt = None
     if isinstance(env.content, dict):
@@ -34,14 +53,14 @@ async def handle_llm_request(env: Envelope, redis: Redis):
     reply_to = env.reply_to or keys.edge_response("llm", env.user_id or env.agent_name)
 
     result_text = ""
-    if openai and AZURE_ENDPOINT and AZURE_API_KEY and AZURE_DEPLOYMENT:
+    if openai and cfg.get("endpoint") and cfg.get("api_key") and cfg.get("deployment"):
         openai.api_type = "azure"
-        openai.api_base = AZURE_ENDPOINT
-        openai.api_version = AZURE_API_VERSION
-        openai.api_key = AZURE_API_KEY
+        openai.api_base = cfg["endpoint"]
+        openai.api_version = cfg["api_version"]
+        openai.api_key = cfg["api_key"]
         try:
             resp = await openai.ChatCompletion.acreate(
-                engine=AZURE_DEPLOYMENT,
+                engine=cfg["deployment"],
                 messages=[{"role": "user", "content": prompt}]
             )
             result_text = resp.choices[0].message.content
@@ -60,17 +79,28 @@ async def handle_llm_request(env: Envelope, redis: Redis):
     )
     await publish_envelope(redis, reply_to, response_env)
 
-async def main():
+async def main(config_path: str | None = None):
+    cfg = load_llm_config(config_path)
     redis = Redis.from_url(build_redis_url())
     await start_bus_subscriptions(
         redis=redis,
         patterns=[REQUEST_STREAM],
         group="llm_edge",
-        handler=lambda env: handle_llm_request(env, redis)
+        handler=lambda env: handle_llm_request(env, redis, cfg)
     )
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="LLM Edge Handler")
+    parser.add_argument(
+        "--config",
+        help="Path to JSON/YAML file with Azure OpenAI credentials",
+    )
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
+    args = parse_args()
     try:
-        asyncio.run(main())
+        asyncio.run(main(args.config))
     except KeyboardInterrupt:
         pass

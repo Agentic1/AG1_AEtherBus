@@ -4,16 +4,30 @@ This edge connector exposes Azure OpenAI models via the AG1 bus. It subscribes t
 `AG1:edge:llm:requests`, forwards prompts to your Azure deployment, then publishes
 responses back to the provided reply stream.
 
-## Environment Variables
+## Configuration
+Credentials can be provided via environment variables or a config file.
+
+### Environment Variables
 - `AZURE_OPENAI_ENDPOINT` – Your Azure OpenAI endpoint URL
 - `AZURE_OPENAI_API_KEY` – API key for the service
 - `AZURE_OPENAI_DEPLOYMENT` – Chat completion deployment name
 - `AZURE_OPENAI_API_VERSION` – API version (default `2024-02-15-preview`)
 
+### Config File
+You may supply a JSON or YAML file with the same keys using `--config`:
+
+```yaml
+endpoint: https://your-endpoint.openai.azure.com/
+api_key: sk-...
+deployment: gpt-35-turbo
+api_version: 2024-02-15-preview
+```
+
 ## Running
 ```
-python -m AG1_AetherBus.handlers.llm_edge_handler
+python -m AG1_AetherBus.handlers.llm_edge_handler --config /path/to/llm.yaml
 ```
+If `--config` is omitted, the handler reads credentials from environment variables.
 Ensure the Redis connection is configured via standard bus variables.
 
 ### Registration
