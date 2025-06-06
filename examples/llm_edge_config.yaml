@@ -1,0 +1,4 @@
+endpoint: https://your-endpoint.openai.azure.com/
+api_key: AZURE_API_KEY
+deployment: gpt-35-turbo
+api_version: 2024-02-15-preview
