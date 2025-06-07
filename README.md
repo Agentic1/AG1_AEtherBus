@@ -334,3 +334,8 @@ Envelope(
   3. Implement/extend the edge handler to process new edge registrations.
 - See the `register_with_tg_handler` function in `agent_bus_minimal.py` for a template and TODO notes.
 
+
+---
+
+### Experimental Attestation Layer
+An optional proof-of-concept signing system lives under `feature/experimental_attestation`. It provides helper functions to sign and verify envelopes using HMAC and stores attestations in a local SQLite ledger. The bus itself is unchanged; use the provided `publish_with_attestation` and `subscribe_with_attestation` helpers if you wish to enable this layer.
