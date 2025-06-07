@@ -7,6 +7,8 @@ from AG1_AetherBus.bus import publish_envelope  # low-level xadd helper
 from AG1_AetherBus.envelope import Envelope
 from AG1_AetherBus.agent_bus_minimal import start_bus_subscriptions
 import json
+# Registry helpers for simple handshake
+from AG1_AetherBus.agent_registry import register_agent, unregister_agent
 # Redis specific imports
 from redis.asyncio import Redis as AsyncRedis # For type hinting and explicit async Redis client
 from redis.exceptions import ConnectionError as RedisConnectionError # For specific exception handling
@@ -42,8 +44,16 @@ class BusAdapterV2:
         """
         Subscribe to all statically configured patterns.
         """
+        # ensure agent is registered before listening
+        await register_agent(self.redis, self.agent_id)
         for pattern in self.patterns:
             await self._subscribe_pattern(pattern, self.core)
+
+    async def stop(self):
+        """Cancel all running subscription tasks."""
+        for pattern in list(self._running_subscription_tasks.keys()):
+            await self.remove_subscription(pattern)
+        await unregister_agent(self.redis, self.agent_id)
 
     async def _subscribe_pattern(
         self,

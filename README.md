@@ -60,6 +60,10 @@ All keys are prefixed with the namespace (default: `AG1`).
 | Flow Output      | `AG1:flow:{flow_id}:output`             | `AG1:flow:myflow:output`      |
 | Session Stream   | `AG1:session:{session_code}:stream`     | `AG1:session:xyz123:stream`   |
 | Edge Register    | `AG1:edge:{platform}:register`          | `AG1:edge:telegram:register`  |
+| LLM Requests     | `AG1:edge:llm:requests`                 | `AG1:edge:llm:requests`       |
+| LLM Register     | `AG1:edge:llm:register`                 | `AG1:edge:llm:register`       |
+| Mail Register    | `AG1:edge:mail:register`                | `AG1:edge:mail:register`      |
+| Nostr Register   | `AG1:edge:nostr:register`               | `AG1:edge:nostr:register`     |
 
 > **Note:** Always use the `StreamKeyBuilder` class to generate these keys in code.
 
@@ -330,3 +334,22 @@ Envelope(
   3. Implement/extend the edge handler to process new edge registrations.
 - See the `register_with_tg_handler` function in `agent_bus_minimal.py` for a template and TODO notes.
 
+For a hands-on walkthrough of running edge handlers and registering agents, see
+`docs/README_execute.md`.
+
+For the optional encryption workflow that complements attestation, see
+`docs/README_encryption.md`.
+
+### Agent Registry & Handshake
+`BusAdapterV2` registers its `agent_id` in a Redis set (`AG1:registry:agents`) when started
+and removes it on shutdown. This provides a simple mechanism to ensure IDs are
+unique on the network. Other components can check registration status using
+`is_registered` from `AG1_AetherBus.agent_registry`. See
+`docs/README_AGENT_REGISTRY.md` for a walkthrough and ASCII diagram of the
+handshake.
+
+
+---
+
+### Experimental Attestation Layer
+An optional proof-of-concept signing system lives under `feature/experimental_attestation`. It provides helper functions to sign and verify envelopes using HMAC and stores attestations in a local SQLite ledger. The bus itself is unchanged; use the provided `publish_with_attestation` and `subscribe_with_attestation` helpers if you wish to enable this layer.
