@@ -334,6 +334,12 @@ Envelope(
   3. Implement/extend the edge handler to process new edge registrations.
 - See the `register_with_tg_handler` function in `agent_bus_minimal.py` for a template and TODO notes.
 
+### Agent Registry & Handshake
+`BusAdapterV2` registers its `agent_id` in a Redis set (`AG1:registry:agents`) when started
+and removes it on shutdown.  This provides a simple mechanism to ensure IDs are
+unique on the network. Other components can check registration status using
+`is_registered` from `AG1_AetherBus.agent_registry`.
+
 
 ---
 
