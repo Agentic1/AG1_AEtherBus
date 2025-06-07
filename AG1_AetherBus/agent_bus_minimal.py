@@ -65,6 +65,43 @@ async def register_with_tg_handler(config, redis):
     print(f"[AG1_AetherBus][REGISTER] Sent registration envelope for {config['agent_name']} to {channel}")
 
 
+async def register_with_llm_handler(config, redis):
+    """Send a registration envelope to the LLM edge handler."""
+    envelope = Envelope(
+        role="agent",
+        envelope_type="register",
+        agent_name=config["agent_name"],
+        content={
+            "provider": config.get("llm_provider", "openai")
+        },
+        timestamp=datetime.datetime.utcnow().isoformat() + "Z"
+    )
+    channel = StreamKeyBuilder().edge_register("llm")
+    await publish_envelope(redis, channel, envelope)
+    print(
+        f"[AG1_AetherBus][REGISTER] Sent LLM registration envelope for {config['agent_name']} to {channel}"
+    )
+
+
+async def register_with_nostr_handler(config, redis):
+    """Send a registration envelope to the Nostr edge handler."""
+    envelope = Envelope(
+        role="agent",
+        envelope_type="register",
+        agent_name=config["agent_name"],
+        content={
+            "pubkey": config.get("pubkey"),
+            "relay": config.get("relay")
+        },
+        timestamp=datetime.datetime.utcnow().isoformat() + "Z"
+    )
+    channel = StreamKeyBuilder().edge_register("nostr")
+    await publish_envelope(redis, channel, envelope)
+    print(
+        f"[AG1_AEtherBus][REGISTER] Sent Nostr registration envelope for {config['agent_name']} to {channel}"
+    )
+
+
 async def register_with_a2a_handler(config: dict, redis: Redis) -> None:
     """
     Register an agent with the A2A edge handler.

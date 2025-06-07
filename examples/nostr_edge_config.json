@@ -1,0 +1,5 @@
+{
+  "agent_name": "MuseNostr",
+  "pubkey": "npub1yourpublickey",
+  "relay": "wss://relay.damus.io"
+}
