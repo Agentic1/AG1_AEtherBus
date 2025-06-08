@@ -182,10 +182,10 @@ class McpToolFactory:
             )
             # The effective signature FunctionTool sees for `executable_for_tool` should be:
             # (tool_arguments: Optional[Dict[str, Any]] = None)
-
+ 
             # ... (augmented_description logic as before, guiding LLM to use the
-            #      {"tool_arguments": {...}} wrapper for the 'tool_arguments' parameter) ...
-            
+            #       {"tool_arguments": {...}} wrapper for the 'tool_arguments' parameter) ...
+             
             #tool_description = bp_data.get("tool_description", f"Tool {tool_name_orig}")
             tool_description = bp_data.get("tool_description") # Get raw value
             if not isinstance(tool_description, str) or not tool_description.strip(): # If None, not a string, or empty/whitespace
