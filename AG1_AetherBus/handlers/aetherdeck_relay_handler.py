@@ -217,12 +217,10 @@ async def listen_for_user_directives(user_id, ws_connection, redis_client):
             except Exception as e:
                 print(f"[RELAY-WS][ERROR] Failed to send UI Directive to AetherDeck User {user_id} via WebSocket: {e}")
 
-
-
-             ##------>>>>---->>>> Content Handling end!!!   
+            # Content handling done
         else:
             print(f"[RELAY-WS][WARN] WebSocket for User {user_id} is closed. Cannot send UI Directive. Directive Stream: {directive_stream}")
-            # This listener will automatically terminate when the main websocket_handler task ends.
+            # Listener stops automatically when the websocket handler exits
 
     try:
         # CORRECTED: Pass redis_client, stream_name, and handler positionally
@@ -283,8 +281,7 @@ async def websocket_handler(request):
     bus_listener_task = None # Initialize
 
     try:
-        #---->>>>> ADDD WINDOW LOGIC !!!
-        # --- NEW: Send initial CREATE_WINDOW directive on new connection ---
+        # Send initial CREATE_WINDOW directive when a client connects
         initial_chat_window_directive = {
             "directive_type": "CREATE_WINDOW",
             "window_id": "main_chat_window",
@@ -304,7 +301,7 @@ async def websocket_handler(request):
             print(f"[WS][UI] Sent CREATE_WINDOW for user {user_id}: main_chat_window")
         except Exception as e:
             print(f"[WS][UI][ERROR] Failed to send CREATE_WINDOW to user {user_id}: {e}")
-            # Consider closing the WS if this fails, as UI won't be functional.
+            # Close the connection if UI initialization fails
 
         bus_listener_task = asyncio.create_task(listen_for_user_directives(user_id, ws, redis_client))
 
