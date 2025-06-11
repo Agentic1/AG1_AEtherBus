@@ -196,14 +196,14 @@ async def subscribe(
 
 
 # Simple non-group subscriber
-async def subscribe_simple(redis, stream: str, callback, poll_delay=1):
+async def PREDEBUGsubscribe_simple(redis, stream: str, callback, poll_delay=1):
     print(f'subscibe {redis} stream {stream}')
     last_id = "$"  # Only get new messages
     while True:
         try:
-            #print('x')
-            results = await redis.xreadgroup({stream: last_id}, block=poll_delay * 1000, count=10)
-            #results = await redis.xread({stream: last_id}, block=poll_delay * 1000, count=10)
+            #print('---->>>>x') #xreadgroup
+            results = await redis.xread({stream: last_id}, block=poll_delay * 1000, count=10)
+            #results = await redis.xreadgroup({stream: last_id}, block=poll_delay * 1000, count=10)
             #print(f"subscribe_simple: results={results} s{stream}")
             for s, messages in results:
                 for msg_id, fields in messages:
@@ -217,6 +217,62 @@ async def subscribe_simple(redis, stream: str, callback, poll_delay=1):
                             print(f"[BUS][ERROR] Malformed envelope: {e}")
         except Exception as e:
             print(f"[BUS][ERROR] Failed to read from {stream}: {e}")
+
+async def subscribe_simple(redis, stream: str, callback, poll_delay: int = 1, start_id: str = "$"):
+    print(f"[BUS][subscribe_simple] ENTERING for stream '{stream}', start_id '{start_id}'")
+    last_id = start_id
+    loop_count = 0
+    while True:
+        loop_count += 1
+        #print(f"  [BUS][subscribe_simple][{stream}] Loop iteration {loop_count}. last_id: '{last_id}'. Attempting XREAD...")
+        try:
+            response = await redis.xread(
+                streams={stream: last_id},
+                count=10,
+                block=poll_delay * 1000
+            )
+            # print(f"  [BUS][subscribe_simple][{stream}] XREAD response: {response}") # Can be very verbose
+
+            if not response:
+                # print(f"  [BUS][subscribe_simple][{stream}] XREAD timed out (no new messages). Continuing loop.")
+                await asyncio.sleep(0.01) # Tiny sleep to prevent tight loop on continuous timeouts
+                continue
+
+            print(f"  [BUS][subscribe_simple][{stream}] XREAD got {len(response[0][1]) if response else 0} message(s).")
+            for stream_name_bytes, messages_in_stream in response:
+                for message_id_bytes, message_data_dict_bytes in messages_in_stream:
+                    current_message_id = message_id_bytes.decode('utf-8')
+                    print(f"    [BUS][subscribe_simple][{stream}] Processing message_id: {current_message_id}")
+                    last_id = current_message_id # Update last_id for the next XREAD
+
+                    envelope_json_bytes = message_data_dict_bytes.get(b'data')
+                    if envelope_json_bytes:
+                        try:
+                            envelope_json_str = envelope_json_bytes.decode('utf-8')
+                            env_dict = json.loads(envelope_json_str)
+                            env = Envelope.from_dict(env_dict)
+                            print(f"      [BUS][subscribe_simple][{stream}] Calling callback for {current_message_id}...")
+                            await callback(env)
+                            print(f"      [BUS][subscribe_simple][{stream}] Callback finished for {current_message_id}.")
+                        except json.JSONDecodeError as e_json:
+                            print(f"      [BUS][subscribe_simple][ERROR][{stream}] JSONDecodeError for msg {current_message_id}: {e_json}")
+                            print(f"        Problematic data: {envelope_json_bytes[:200]}")
+                        except Exception as e_cb:
+                            print(f"      [BUS][subscribe_simple][ERROR][{stream}] Error in callback for msg {current_message_id}: {e_cb}")
+                            traceback.print_exc()
+                    else:
+                        print(f"    [BUS][subscribe_simple][WARN][{stream}] Message {current_message_id} has no 'data' field (b'data'). Fields: {message_data_dict_bytes}")
+            
+            await asyncio.sleep(0.01) # Slight pause after processing a batch
+
+        except ConnectionError as e_conn:
+            print(f"  [BUS][subscribe_simple][ERROR][{stream}] Redis ConnectionError: {e_conn}. Retrying in 5s...")
+            await asyncio.sleep(5)
+        except Exception as e_outer:
+            print(f"  [BUS][subscribe_simple][ERROR][{stream}] Unexpected error in XREAD loop: {e_outer}")
+            traceback.print_exc()
+            print(f"  [BUS][subscribe_simple][{stream}] Continuing XREAD loop after error and {poll_delay}s sleep.")
+            await asyncio.sleep(poll_delay)
 
 # --- Helper: Build Redis URL with optional auth ---
 def build_redis_url():

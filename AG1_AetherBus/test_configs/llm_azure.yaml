@@ -1,0 +1,4 @@
+endpoint: "https://sean-m7497eun-swedencentral.openai.azure.com/openai/deployments/gpt-4o-mini-haka/chat/completions?api-version=2024-08-01-preview"
+api_key: "E5Af5mwzenBJI2pciYRqknSSJSGAoBTtSoeidFW2fQ2h4iWW8SfrJQQJ99BBACfhMk5XJ3w3AAAAACOGTCnr"
+deployment: "gpt-4o-mini"
+api_version: "2024-08-01-preview"

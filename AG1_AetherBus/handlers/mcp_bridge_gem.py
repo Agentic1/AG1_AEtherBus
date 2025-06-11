@@ -418,7 +418,7 @@ async def call_mcp_via_http(endpoint_str, mcp_url_config_payload, tool_name, too
             print(f"[call_mcp_via_http] Tool result: {str(result)[:90]}")
             return result
 
-# --- build_redis_url (ensure it's defined or imported correctly) ---
+# -- - build_redis_url (ensure it's defined or imported correctly) ---
 def build_redis_url():
     user = os.getenv("REDIS_USERNAME")
     pwd = os.getenv("REDIS_PASSWORD")

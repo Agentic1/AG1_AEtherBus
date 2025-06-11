@@ -58,9 +58,10 @@ async def bus_rpc_call(
     redis: Redis,
     target_stream: str,
     request_env: Envelope,
-    timeout: float = 5.0
+    timeout: float = 15.0
 ) -> Optional[str]:
     print(f'----> [RPC] bus_rpc_call initiated. Target: {target_stream}, CID: {request_env.correlation_id}, ReplyTo: {request_env.reply_to}')
+    print(f"\n---<>-----\n[RPC][DEBUG_PUBLISH] About to publish to target_stream='{target_stream}' (type: {type(target_stream)}), request_env.reply_to='{request_env.reply_to}' (type: {type(request_env.reply_to)})")
     await publish_envelope(redis, target_stream, request_env)
     
     deadline = time.time() + timeout
